@@ -46,7 +46,7 @@ def run(target: Path, errexit: bool = True):
         try:
             with open(tmp_fpath, "w") as tmp:
                 tmp.write(content)
-            # TODO I'm not sure how quoting works in hash-bang lines
+            # TODO I'm not sure how quoting works in shebang lines
             #      exe.split() might break things
             res = subprocess.run([*exe.split(), tmp.name])
             if errexit and res.returncode != 0:
