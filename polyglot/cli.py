@@ -1,8 +1,10 @@
 from pathlib import Path
 import tempfile
 import os
-import subprocess
 import sys
+
+from subprocess import Popen, PIPE
+import shlex
 
 import re
 
@@ -13,7 +15,7 @@ app = typer.Typer()
 SHEBANG = r"^#!(/.*)"
 
 @app.command()
-def run(target: Path, errexit: bool = True):
+def run(target: Path, errexit: bool = True, communicate: bool = False):
     """
     Run a polyglot script
     """
@@ -32,6 +34,14 @@ def run(target: Path, errexit: bool = True):
         print("Did you forget to add a shebang line?", file=sys.stderr)
         raise typer.Exit(code=1)
 
+    in_ = b''
+    if not sys.stdin.isatty() and communicate:
+        in_ = sys.stdin.read().encode()
+
+    stdin, stdout, stderr = None, None, None
+    if communicate:
+        stdin, stdout, stderr = PIPE, PIPE, PIPE
+    
     for i in range(0, len(scripts), 2):
         exe, content = scripts[i:i+2]
 
@@ -41,10 +51,21 @@ def run(target: Path, errexit: bool = True):
         try:
             with open(tmp_fpath, "w") as tmp:
                 tmp.write(content)
-            # TODO I'm not sure how quoting works in shebang lines
-            #      exe.split() might break things
-            res = subprocess.run([*exe.split(), tmp.name])
-            if errexit and res.returncode != 0:
-                raise typer.Exit(res.returncode)
+
+            proc = Popen([*shlex.split(exe), tmp.name], stdin=stdin, stdout=stdout, stderr=stderr)
+
+            if communicate:
+                in_, err = proc.communicate(input=in_)
+            else:
+                proc.wait()
+                err = ""
+
+            if errexit and proc.returncode:
+                if communicate:
+                    print(err, file=sys.stderr, end='')
+                raise typer.Exit(proc.returncode)
         finally:
             os.remove(tmp_fpath)
+
+    if communicate:
+        print(in_.decode(), end='')

@@ -1,3 +1,7 @@
+from pathlib import Path
+import os 
+import sys
+
 import pytest
 import typer
 
@@ -5,50 +9,51 @@ from polyglot import __version__
 
 from polyglot.cli import run
 
-def test_version():
-    assert __version__ == '0.1.0'
+@pytest.fixture()
+def script(request):
+    filename = request.module.__file__
+    test_dir, _ = os.path.splitext(filename)
+    script = Path(test_dir) / request.param
+    return script
 
-SUCCESS_SCRIPT = """
-#!/usr/bin/env python
-print("Hello, Python!")
-#!/usr/bin/env bash
-echo "Hello, Bash!"
-"""
-
-def test_run_success(capfd, tmp_path):
-    script = tmp_path / "test.poly"
-    script.write_text(SUCCESS_SCRIPT)
+@pytest.mark.parametrize('script', ["success.poly"], indirect=True)
+def test_run_success(script, capfd):
+    sys.argv[0] = "polyglot"
     run(script)
     out, _ = capfd.readouterr()
     assert out == "Hello, Python!\nHello, Bash!\n"
 
+@pytest.mark.parametrize('script', ["communicate.poly"], indirect=True)
+def test_run_communicate(script, capfd):
+    sys.argv[0] = "polyglot"
+    run(script, communicate=True)
+    out, _ = capfd.readouterr()
+    assert out == "Hello, Bash! Also \"Hello, Python!\"\n"
 
-FAIL_SCRIPT = """
-#!/usr/bin/env python
-import sys
-print("I failed!", file=sys.stderr)
-exit(1)
-#!/usr/bin/env bash
-echo "Hello, Bash!"
-"""
 
-def test_run_failure(capfd, tmp_path):
-    script = tmp_path / "test.poly"
-    script.write_text(FAIL_SCRIPT)
+@pytest.mark.parametrize('script', ["fail.poly"], indirect=True)
+def test_run_failure(script, capfd):
+    sys.argv[0] = "polyglot"
     with pytest.raises(typer.Exit) as excinfo:
         run(script)
 
     assert excinfo.value.exit_code == 1
-    _, err = capfd.readouterr()
+    out, err = capfd.readouterr()
     assert err == "I failed!\n"
+    assert not out
 
-NO_SHEBANG_SCRIPT = """
-print("Hello, Python!")
-"""
+@pytest.mark.parametrize('script', ["fail.poly"], indirect=True)
+def test_run_failure_without_errexit(script, capfd):
+    sys.argv[0] = "polyglot"
+    run(script, errexit=False)
 
-def test_run_missing(capfd, tmp_path):
-    script = tmp_path / "test.poly"
-    script.write_text(NO_SHEBANG_SCRIPT)
+    out, err = capfd.readouterr()
+    assert err == "I failed!\n"
+    assert out == "Hello, Bash!\n"
+
+@pytest.mark.parametrize('script', ["no_shebang.poly"], indirect=True)
+def test_run_missing(script, capfd):
+    sys.argv[0] = "polyglot"
     with pytest.raises(typer.Exit) as excinfo:
         run(script)
 

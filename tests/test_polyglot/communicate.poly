@@ -1,0 +1,7 @@
+#!/usr/bin/env -S polyglot --communicate
+
+#!/usr/bin/env python
+print("Hello, Python!")
+#!/usr/bin/env bash
+read -r line
+echo "Hello, Bash! Also \"$line\""
