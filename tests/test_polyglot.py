@@ -1,4 +1,5 @@
 import pytest
+import typer
 
 from polyglot import __version__
 
@@ -34,9 +35,9 @@ echo "Hello, Bash!"
 def test_run_failure(capfd, tmp_path):
     script = tmp_path / "test.poly"
     script.write_text(FAIL_SCRIPT)
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(typer.Exit) as excinfo:
         run(script)
 
-    assert excinfo.value.code == 1
+    assert excinfo.value.exit_code == 1
     _, err = capfd.readouterr()
     assert err == "I failed!\n"

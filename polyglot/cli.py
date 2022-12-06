@@ -2,28 +2,15 @@ from pathlib import Path
 import tempfile
 import os
 import subprocess
+import sys
+
+import re
 
 import typer
 
 app = typer.Typer()
 
-from typing import Iterator, Tuple
-
-
-def partition(lines) -> Iterator[Tuple[str, str]]:
-    buffer = []
-    exe = None
-    for line in lines:
-        if line.startswith("#!/"):
-            if exe and buffer:
-                yield (exe, "\n".join(buffer))
-            exe = line[2:]
-            buffer = []
-        else:
-            buffer.append(line)
-    if exe and buffer:
-        yield (exe, "\n".join(buffer))
-
+SHEBANG = r"^#!(/.*)"
 
 @app.command()
 def run(target: Path, errexit: bool = True):
@@ -34,12 +21,20 @@ def run(target: Path, errexit: bool = True):
     with open(target, 'r') as f:
         content = f.read()
 
-    lines = content.splitlines()
-    start = 0
-    while not lines[start].startswith("#!/") or 'polyglot' in lines[start]:
-        start += 1
+    scripts = [s for chunk in re.split(SHEBANG, content.strip(), 0, re.MULTILINE) if (s := chunk.strip())]
 
-    for exe, content in partition(lines[start:]):
+    # Remove "#!/usr/bin/env polyglot" (or related) if present
+    if Path(sys.argv[0]).name in scripts[0]:
+        scripts = scripts[1:]
+
+    if len(scripts) % 2:
+        print("Mismatch in shebang lines to content blocks", file=sys.stderr)
+        print("Did you forget to add a shebang line?", file=sys.stderr)
+        raise typer.Exit(code=1)
+
+    for i in range(0, len(scripts), 2):
+        exe, content = scripts[i:i+2]
+
         # https://stackoverflow.com/a/17371096
         fd, tmp_fpath = tempfile.mkstemp()
         os.close(fd)
@@ -50,6 +45,6 @@ def run(target: Path, errexit: bool = True):
             #      exe.split() might break things
             res = subprocess.run([*exe.split(), tmp.name])
             if errexit and res.returncode != 0:
-                exit(res.returncode)
+                raise typer.Exit(res.returncode)
         finally:
             os.remove(tmp_fpath)
