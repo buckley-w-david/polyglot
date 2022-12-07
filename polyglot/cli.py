@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import re
 from subprocess import Popen, PIPE
 import shlex
@@ -57,12 +56,9 @@ def run(
     for i in range(0, len(scripts), 2):
         exe, content = scripts[i : i + 2]
 
-        # https://stackoverflow.com/a/17371096
-        fd, tmp_fpath = tempfile.mkstemp()
-        os.close(fd)
-        try:
-            with open(tmp_fpath, "w") as tmp:
-                tmp.write(content)
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write(content)
+            tmp.flush() # If we don't flush, the subprocess will just find an empty file
 
             proc = Popen(
                 [*shlex.split(exe), tmp.name], stdin=stdin, stdout=stdout, stderr=stderr
@@ -78,8 +74,6 @@ def run(
                 if communicate:
                     print(err, file=sys.stderr, end="")
                 raise typer.Exit(proc.returncode)
-        finally:
-            os.remove(tmp_fpath)
 
     if communicate:
         print(in_.decode(), end="")

@@ -21,7 +21,7 @@ def script(request):
 @pytest.mark.parametrize("script", ["success.poly"], indirect=True)
 def test_run_success(script, capfd):
     sys.argv[0] = "polyglot"
-    run(script)
+    run(script, errexit=True, communicate=False)
     out, _ = capfd.readouterr()
     assert out == "Hello, Python!\nHello, Bash!\n"
 
@@ -29,7 +29,7 @@ def test_run_success(script, capfd):
 @pytest.mark.parametrize("script", ["communicate.poly"], indirect=True)
 def test_run_communicate(script, capfd):
     sys.argv[0] = "polyglot"
-    run(script, communicate=True)
+    run(script, errexit=True, communicate=True)
     out, _ = capfd.readouterr()
     assert out == 'Hello, Bash! Also "Hello, Python!"\n'
 
@@ -38,7 +38,7 @@ def test_run_communicate(script, capfd):
 def test_run_failure(script, capfd):
     sys.argv[0] = "polyglot"
     with pytest.raises(typer.Exit) as excinfo:
-        run(script)
+        run(script, errexit=True, communicate=False)
 
     assert excinfo.value.exit_code == 1
     out, err = capfd.readouterr()
@@ -49,7 +49,7 @@ def test_run_failure(script, capfd):
 @pytest.mark.parametrize("script", ["fail.poly"], indirect=True)
 def test_run_failure_without_errexit(script, capfd):
     sys.argv[0] = "polyglot"
-    run(script, errexit=False)
+    run(script, errexit=False, communicate=False)
 
     out, err = capfd.readouterr()
     assert err == "I failed!\n"
@@ -60,7 +60,7 @@ def test_run_failure_without_errexit(script, capfd):
 def test_run_missing(script, capfd):
     sys.argv[0] = "polyglot"
     with pytest.raises(typer.Exit) as excinfo:
-        run(script)
+        run(script, errexit=True, communicate=False)
 
     assert excinfo.value.exit_code == 1
     _, err = capfd.readouterr()
