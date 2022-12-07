@@ -16,7 +16,8 @@ SHEBANG = r"^#!(/.*)"
 def run(
     target: Path = typer.Argument(..., help="The polyglot script to run."),
     errexit: bool = typer.Option(
-        default=True, help="If errexit the script will exit if any script exits with an error status code."
+        default=True,
+        help="If errexit the script will exit if any script exits with an error status code.",
     ),
     communicate: bool = typer.Option(
         default=False,
@@ -58,7 +59,7 @@ def run(
 
         with tempfile.NamedTemporaryFile("w+") as tmp:
             tmp.write(content)
-            tmp.flush() # If we don't flush, the subprocess will just find an empty file
+            tmp.flush()  # If we don't flush, the subprocess will just find an empty file
 
             proc = Popen(
                 [*shlex.split(exe), tmp.name], stdin=stdin, stdout=stdout, stderr=stderr
