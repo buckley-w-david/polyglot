@@ -66,6 +66,14 @@ Instead of putting up with it (and doing it all in one language) or splitting so
 
 We're trying to get the benefits of the first option without the negatives.
 
+## Disclaimer
+
+Probably don't depend on this for anything important. It's a relativly simplistic utility, and I have put almost no thought into edge cases.
+
+Each script section is executed as its own subprocess. This means that no state is preserved between sections.
+
+The `--communicate` flag can be used to pipe stdout from each section into stdin of the next. This is currently as far as shared state goes.
+
 ## Examples
 
 Check out [tests/test_polyglot/](tests/test_polyglot/) for some (very small) example scripts.
