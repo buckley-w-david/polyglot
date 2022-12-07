@@ -1,0 +1,31 @@
+name: CI
+on:
+  pull_request:
+  push: { branches: [master] }
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install poetry==1.1.13
+          poetry config virtualenvs.create false
+          poetry install
+      - name: Lint with black
+        run: |
+          black --check polyglot/ tests/
+      - name: Test with pytest
+        run: |
+          pytest -s
+      - name: Typecheck with pyright
+        run: |
+          pyright
