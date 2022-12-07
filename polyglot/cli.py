@@ -1,12 +1,10 @@
 from pathlib import Path
-import tempfile
 import os
-import sys
-
+import re
 from subprocess import Popen, PIPE
 import shlex
-
-import re
+import sys
+import tempfile
 
 import typer
 
@@ -16,7 +14,16 @@ SHEBANG = r"^#!(/.*)"
 
 
 @app.command()
-def run(target: Path, errexit: bool = True, communicate: bool = False):
+def run(
+    target: Path = typer.Argument(..., help="The polyglot script to run."),
+    errexit: bool = typer.Option(
+        default=True, help="If errexit the script will exit if any script exits."
+    ),
+    communicate: bool = typer.Option(
+        default=False,
+        help="If communicate stdout from each script will be fed into stdin of the next.",
+    ),
+):
     """
     Run a polyglot script
     """
