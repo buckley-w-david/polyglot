@@ -41,7 +41,8 @@ $ polyglot --help
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --errexit               --no-errexit          If errexit the script will     │
-│                                               exit if any script exits.      │
+│                                               exit if any script exits with  │
+│                                               an error status code.          │
 │                                               [default: errexit]             │
 │ --communicate           --no-communicate      If communicate stdout from     │
 │                                               each script will be fed into   │

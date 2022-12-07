@@ -17,7 +17,7 @@ SHEBANG = r"^#!(/.*)"
 def run(
     target: Path = typer.Argument(..., help="The polyglot script to run."),
     errexit: bool = typer.Option(
-        default=True, help="If errexit the script will exit if any script exits."
+        default=True, help="If errexit the script will exit if any script exits with an error status code."
     ),
     communicate: bool = typer.Option(
         default=False,
