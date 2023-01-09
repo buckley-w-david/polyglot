@@ -12,7 +12,7 @@ typer = {extras = ["all"], version = "^0.7.0"}
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"
 black = "^22.10.0"
-pyright = "^1.1.282"
+pyright = "^1.1.287"
 
 [tool.poetry.scripts]
 polyglot = 'polyglot:cli.app'
